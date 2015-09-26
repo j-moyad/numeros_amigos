@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <mpi.h>
 
-#define N 1000000
+//#define N 1000000
+#define N 100000
 
 int main(int argc, char **argv) {
 	int nproc, pid, sproc;
@@ -110,7 +111,7 @@ int main(int argc, char **argv) {
 
 			// Si el posible amigo no es el mismo numero
 			if(vector[i] != si) {
-				//Verificar si si existe
+				//Verificar si 'si' existe
 				MPI_Send(&si, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 				MPI_Recv(&exists, 1, MPI_INT, 0, pid, MPI_COMM_WORLD, &status);
 
@@ -127,7 +128,7 @@ int main(int argc, char **argv) {
 					}
 
 					if (sa == vector[i] && si > sa) {
-						printf("%d %d\n", vector[i], si);
+						printf("%d %d\n", sa, si);
 					}
 				}
 			}

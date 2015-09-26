@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <mpi.h>
 
-//#define N 1000000
-#define N 1000
+#define N 1000000
 
 int main(int argc, char **argv) {
 	int nproc, pid, sproc;
 	int i, j, tmp, exists, size, size2, *vector, finished_processes=0;
+	int si, sa, d;
 	MPI_Status status;
 
 	MPI_Init(&argc, &argv);
@@ -59,15 +59,15 @@ int main(int argc, char **argv) {
 						exists = 1;
 						break;
 					}
-
-					/* Si tmp existe en el vector principal
-					 * enviar un 1 confirmando o un 0 para indicar que
-					 * no existe el numero
-					 */
-					MPI_Send(&exists, 1, MPI_INT, status.MPI_SOURCE, i,
-							 MPI_COMM_WORLD);
-
 				}
+				
+				/* Si tmp existe en el vector principal
+				 * enviar un 1 confirmando o un 0 para indicar que
+				 * no existe el numero
+				 */
+				MPI_Send(&exists, 1, MPI_INT, status.MPI_SOURCE, status.MPI_SOURCE, 
+						 MPI_COMM_WORLD);
+
 			} else {  // Tag 1 es indicar que el proceso esclavo ya termino
 				/* Cuando finished_processes sea igual a sproc significa que
 				 * todos los procesos han terminado
@@ -87,51 +87,52 @@ int main(int argc, char **argv) {
 
 		MPI_Recv(vector, size, MPI_INT, 0, pid, MPI_COMM_WORLD, &status);
 
-		// \/-- DEBUG --\/
+		/*/ \/-- DEBUG --\/
 		printf("%d:\t", pid);
 		for(i=0; i<size; i++) {
 			printf("%d ", vector[i]);
 		}
 		printf("\n\n");
-		MPI_Send(&size, 1, MPI_INT, status.MPI_SOURCE, 1, MPI_COMM_WORLD);
-		// /\-- DEBUG --/\
+		MPI_Send(&size, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+		// /\-- DEBUG --/\*/
 
-		/*
+
 		for(i=0; i<size; i++) {
-			si=0;
+			si = 0;
 
-			d=a[i]/2;
+			d = vector[i] / 2;
 
-			for(j=1; j<=d; j++) {
-				if (a[i]%j==0) {
-					si+=j;
+			for(j=1; j <= d; j++) {
+				if(vector[i] % j == 0) {
+					si += j;
 				}
 			}
 
 			// Si el posible amigo no es el mismo numero
-			if (a[i]!=si) {
-				// Confirmar amistad con a[si]
-				for (k=0; k<N; k++) {
-					if (a[k]==si) {   // Si existe el posible amigo en el arreglo
-						sa=0;
+			if(vector[i] != si) {
+				//Verificar si si existe
+				MPI_Send(&si, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+				MPI_Recv(&exists, 1, MPI_INT, 0, pid, MPI_COMM_WORLD, &status);
 
-						d=a[k]/2;
+				// Si existe el posible amigo en el arreglo
+				if(exists) {   
+					sa = 0;
 
-						for(j=1; j<=d; j++) {
-							if (a[k]%j==0) {
-								sa+=j;
-							}
+					d = si / 2;
+
+					for(j=1; j <= d; j++) {
+						if(si % j == 0) {
+							sa += j;
 						}
+					}
 
-						if (sa==a[i]) {
-							printf("%lld %lld\n", a[i], si);
-						}
-
-						break;
+					if (sa == vector[i] && si > sa) {
+						printf("%d %d\n", vector[i], si);
 					}
 				}
 			}
-		}*/
+		}
+		MPI_Send(&size, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
 	}
 
 	MPI_Finalize();

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <mpi.h>
 
 //#define N 1000000
@@ -9,6 +10,7 @@ int main(int argc, char **argv) {
 	int nproc, pid, sproc;
 	int i, j, tmp, exists, size, size2, *vector, finished_processes=0;
 	int si, sa, d;
+	clock_t start, end;
 	MPI_Status status;
 
 	MPI_Init(&argc, &argv);
@@ -16,8 +18,11 @@ int main(int argc, char **argv) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &pid);
 
 	sproc = nproc - 1;
-
+	
+	start = clock();
+	
 	if(N % sproc == 0) {
+		
 		/* Si los datos se pueden distribuir equitativamente size es igual para
 		 * todos
 		 */
@@ -78,6 +83,7 @@ int main(int argc, char **argv) {
 		}
 	} else {		// Procesos esclavos
 		vector = (int *)malloc(sizeof(int) * size);
+		
 		/* Si los datos no se pueden repartir equitativamente entre los procesos
 		 * el ultimo proceso va a tener menos datos, asi que se ajusta size al
 		 * valor que tiene size2 para ese proceso
@@ -87,16 +93,6 @@ int main(int argc, char **argv) {
 		}
 
 		MPI_Recv(vector, size, MPI_INT, 0, pid, MPI_COMM_WORLD, &status);
-
-		/*/ \/-- DEBUG --\/
-		printf("%d:\t", pid);
-		for(i=0; i<size; i++) {
-			printf("%d ", vector[i]);
-		}
-		printf("\n\n");
-		MPI_Send(&size, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
-		// /\-- DEBUG --/\*/
-
 
 		for(i=0; i<size; i++) {
 			si = 0;
@@ -135,7 +131,24 @@ int main(int argc, char **argv) {
 		}
 		MPI_Send(&size, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
 	}
+	
+	if(pid == 0) {
+		end = clock();
 
+		int h,m;
+		float s;
+		s = (float)(end - start) / CLOCKS_PER_SEC;
+		
+		m = ((int)s / 60) % 60;
+		h = s / 3600;
+		
+		while(s >= 60) { // Como no es int no se puede usar modulo
+			s -= 60.0;
+		}
+		
+		printf("Tiempo total: %02d:%02d:%09.06f\n", h, m, s);
+	}
+	
 	MPI_Finalize();
 	return 0;
 }

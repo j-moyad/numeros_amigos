@@ -4,7 +4,7 @@
 #include <mpi.h>
 
 //#define N 1000000
-#define N 100000
+#define N 300000
 
 int main(int argc, char **argv) {
 	int nproc, pid, sproc;
@@ -19,7 +19,8 @@ int main(int argc, char **argv) {
 
 	sproc = nproc - 1;
 	
-	start = clock();
+	if(pid == 0)
+		start = clock();
 	
 	if(N % sproc == 0) {
 		
@@ -106,7 +107,8 @@ int main(int argc, char **argv) {
 			}
 
 			// Si el posible amigo no es el mismo numero
-			if(vector[i] != si) {
+			// y es menor que el supuesto amigo
+			if(vector[i] != si && vector[i] < si) {
 				//Verificar si 'si' existe
 				MPI_Send(&si, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 				MPI_Recv(&exists, 1, MPI_INT, 0, pid, MPI_COMM_WORLD, &status);
@@ -117,13 +119,13 @@ int main(int argc, char **argv) {
 
 					d = si / 2;
 
-					for(j=1; j <= d; j++) {
+					for(j=1; j<=d; j++) {
 						if(si % j == 0) {
 							sa += j;
 						}
 					}
 
-					if (sa == vector[i] && si > sa) {
+					if(sa == vector[i] && si > sa) {
 						printf("%d %d\n", sa, si);
 					}
 				}
